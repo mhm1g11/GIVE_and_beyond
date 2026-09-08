@@ -930,12 +930,15 @@ function _compute_scc_mcs(mm::MarginalModel,
         mkpath(joinpath(top_path, "socioeconomics_country"))	
         mkpath(joinpath(top_path, "socioeconomics_region"))	
 
+        mkpath(joinpath(top_path, "mds_country_mortality"))
+        mkpath(joinpath(top_path, "mds_country_energy"))
+        mkpath(joinpath(top_path, "mds_country_slr"))
         mkpath(joinpath(top_path, "mds_country_no_ag"))	
         mkpath(joinpath(top_path, "mds_region_ag_only"))	
 
         # DataFrames with metadata	
         DataFrame(  :variable => [:damages, :md, :population, :pc_gdp],	
-                    :units => ["USD 2005", "USD 2005 per tonne of CO2", "millions of persons", "USD 2005 per capita"],	
+                    :units => ["USD 2005", "USD 2005 per tonne of selected gas", "millions of persons", "USD 2005 per capita"],
                     :notes => ["baseline run", "difference between pulse run and baseline run", "baseline run", "baseline run"]	
                 ) |> save(joinpath(top_path, "disaggregated_values_README.csv"))	
     end

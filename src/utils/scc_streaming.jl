@@ -165,4 +165,27 @@ function _stream_disagg_md(m_base::Mimi.Model, m_modified::Mimi.Model, ciam_base
             streams[filename] = savestreaming(filename, trial_df)	
         end	
     end	
+
+    for (folder, md_component) in (
+        ("mds_country_mortality", md_cromar_mortality),
+        ("mds_country_energy", md_energy),
+        ("mds_country_slr", md_ciam_all_countries),
+    )
+        md_component_df = DataFrame(md_component, dim_keys(m_base, :country)) |>
+                            i -> insertcols!(i, 1, :time => _damages_years) |>
+                            i -> stack(i, Not(:time)) |>
+                            @rename(:variable => :country, :value => :md) |>
+                            DataFrame |>
+                            i -> insertcols!(i, 1, :trialnum => trialnum)
+
+        for country in unique(md_component_df.country)
+            filename = joinpath(output_dir, "results", "disaggregated_values", folder, "$(country).csv")
+            trial_df = md_component_df |> @filter(_.country == country) |> @select(:trialnum, :time, :md) |> DataFrame
+            if haskey(streams, filename)
+                write(streams[filename], trial_df)
+            else
+                streams[filename] = savestreaming(filename, trial_df)
+            end
+        end
+    end
 end
