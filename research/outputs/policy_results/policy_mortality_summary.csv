@@ -1,0 +1,5 @@
+"scenario_id","abatement_scope","benefit_geography","impact_horizon","total_avoided_ch4_t","net_temperature_deaths_avoided"
+"EU27_import_regulation_mock","EU27","EU27",2100,4.2e6,58.667997397288
+"EU27_import_regulation_mock","EU27","globe",2100,4.2e6,2087.186011612898
+"Germany_import_regulation_mock","DEU","DEU",2100,756000.0,1.182017237716256
+"Germany_import_regulation_mock","DEU","globe",2100,756000.0,375.6934820903216

@@ -1,0 +1,15 @@
+scenario_id,abatement_scope,year,avoided_ch4_t,estimate_case,fuel,measure,source,notes
+EU27_import_regulation_mock,EU27,2025,0,central,oil_and_gas,EU Methane Regulation import provisions,POC_ASSUMPTION,No material threshold-induced abatement assumed yet
+EU27_import_regulation_mock,EU27,2026,0,central,oil_and_gas,EU Methane Regulation import provisions,POC_ASSUMPTION,No material threshold-induced abatement assumed yet
+EU27_import_regulation_mock,EU27,2027,100000,central,oil_and_gas,EU Methane Regulation import provisions,POC_INTERPOLATION,Illustrative ramp following start of relevant reporting requirements
+EU27_import_regulation_mock,EU27,2028,300000,central,oil_and_gas,EU Methane Regulation import provisions,POC_INTERPOLATION,Illustrative ramp
+EU27_import_regulation_mock,EU27,2029,600000,central,oil_and_gas,EU Methane Regulation import provisions,POC_INTERPOLATION,Illustrative anticipatory compliance before threshold adoption
+EU27_import_regulation_mock,EU27,2030,1300000,central,oil_and_gas,EU Methane Regulation import provisions,POC_INTERPOLATION,Illustrative first substantial threshold effect
+EU27_import_regulation_mock,EU27,2031,1900000,central,oil_and_gas,EU Methane Regulation import provisions,RYSTAD_VIA_OEKO,Anchored to 1.9 Mt CH4 regulation-induced reduction estimated for 2031
+Germany_import_regulation_mock,DEU,2025,0,central,oil_and_gas,EU Methane Regulation import provisions,POC_ASSUMPTION,Temporary Germany allocation for proof of concept
+Germany_import_regulation_mock,DEU,2026,0,central,oil_and_gas,EU Methane Regulation import provisions,POC_ASSUMPTION,Temporary Germany allocation for proof of concept
+Germany_import_regulation_mock,DEU,2027,18000,central,oil_and_gas,EU Methane Regulation import provisions,POC_ALLOCATION,Approx 18 percent of EU27 mock reduction
+Germany_import_regulation_mock,DEU,2028,54000,central,oil_and_gas,EU Methane Regulation import provisions,POC_ALLOCATION,Approx 18 percent of EU27 mock reduction
+Germany_import_regulation_mock,DEU,2029,108000,central,oil_and_gas,EU Methane Regulation import provisions,POC_ALLOCATION,Approx 18 percent of EU27 mock reduction
+Germany_import_regulation_mock,DEU,2030,234000,central,oil_and_gas,EU Methane Regulation import provisions,POC_ALLOCATION,Approx 18 percent of EU27 mock reduction
+Germany_import_regulation_mock,DEU,2031,342000,central,oil_and_gas,EU Methane Regulation import provisions,POC_ALLOCATION,Approx 18 percent of EU27 mock reduction

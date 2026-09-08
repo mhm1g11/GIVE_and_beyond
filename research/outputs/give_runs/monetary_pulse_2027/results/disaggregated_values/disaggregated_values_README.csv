@@ -1,0 +1,5 @@
+"variable","units","notes"
+damages,"USD 2005","baseline run"
+md,"USD 2005 per tonne of selected gas","difference between pulse run and baseline run"
+population,"millions of persons","baseline run"
+pc_gdp,"USD 2005 per capita","baseline run"
