@@ -3,190 +3,313 @@ using CSVFiles
 using DataFrames
 using Statistics
 
-include(joinpath(@__DIR__, "config.jl"))
+include(
+    joinpath(
+        @__DIR__,
+        "config.jl"
+    )
+)
 
-# ================================================================
+# =====================================================================
 # Input paths
-# ================================================================
+# =====================================================================
 
-const ABATEMENT_PATH = joinpath(
+const POLICY_INPUT = joinpath(
     INPUT_DIR,
     "mock_methane_abatement.csv"
 )
 
-const MONETARY_PATH = joinpath(
+const MONETARY_TRIAL_LIBRARY = joinpath(
     OUTPUT_DIR,
     "monetary_impact_library_trials.csv"
 )
 
-const MORTALITY_CUMULATIVE_PATH = joinpath(
+const TEMPERATURE_CUMULATIVE_LIBRARY = joinpath(
     OUTPUT_DIR,
     "mortality_cumulative_library.csv"
 )
 
-const MORTALITY_RESPONSE_PATH = joinpath(
+const TEMPERATURE_ANNUAL_LIBRARY = joinpath(
     OUTPUT_DIR,
     "mortality_response_library.csv"
 )
 
-# ================================================================
-# Output paths
-# ================================================================
+# Preferred GIVE-first ozone mortality libraries:
+#
+#   GIVE/FaIR atmospheric methane
+#   + GIVE population
+#   + GIVE all-cause mortality trajectory
+#   + McDuffie ozone-health calibration only
+#
+const OZONE_CUMULATIVE_LIBRARY = joinpath(
+    OUTPUT_DIR,
+    "ozone_mortality_cumulative_library_give_first.csv"
+)
 
-const MONETARY_BY_YEAR_PATH = joinpath(
+const OZONE_ANNUAL_LIBRARY = joinpath(
+    OUTPUT_DIR,
+    "ozone_mortality_response_library_give_first.csv"
+)
+
+# =====================================================================
+# Output paths
+# =====================================================================
+
+mkpath(POLICY_RESULT_DIR)
+
+const MONETARY_BY_YEAR_OUTPUT = joinpath(
     POLICY_RESULT_DIR,
     "policy_monetary_by_abatement_year_trials.csv"
 )
 
-const MONETARY_SUMMARY_PATH = joinpath(
+const MONETARY_SUMMARY_OUTPUT = joinpath(
     POLICY_RESULT_DIR,
     "policy_monetary_summary.csv"
 )
 
-const MORTALITY_BY_ABATEMENT_YEAR_PATH = joinpath(
+const MORTALITY_BY_YEAR_OUTPUT = joinpath(
     POLICY_RESULT_DIR,
     "policy_mortality_by_abatement_year.csv"
 )
 
-const MORTALITY_SUMMARY_PATH = joinpath(
+const MORTALITY_SUMMARY_OUTPUT = joinpath(
     POLICY_RESULT_DIR,
     "policy_mortality_summary.csv"
 )
 
-const MORTALITY_BY_IMPACT_YEAR_PATH = joinpath(
+const MORTALITY_IMPACT_YEAR_OUTPUT = joinpath(
     POLICY_RESULT_DIR,
     "policy_mortality_by_impact_year.csv"
 )
 
-mkpath(POLICY_RESULT_DIR)
+# =====================================================================
+# Helpers
+# =====================================================================
 
-# ================================================================
-# Load inputs
-# ================================================================
+function benefit_geographies(scope)
 
-abatement = DataFrame(load(ABATEMENT_PATH))
-monetary = DataFrame(load(MONETARY_PATH))
-mortality_cumulative = DataFrame(load(MORTALITY_CUMULATIVE_PATH))
-mortality_response = DataFrame(load(MORTALITY_RESPONSE_PATH))
+    scope_string =
+        string(scope)
 
-# ================================================================
-# QA checks
-# ================================================================
-
-required_abatement_columns = [
-    :scenario_id,
-    :abatement_scope,
-    :year,
-    :avoided_ch4_t
-]
-
-for col in required_abatement_columns
-    col in propertynames(abatement) ||
-        error("Missing abatement input column: $col")
-end
-
-available_pulse_years =
-    sort(unique(monetary.pulse_year))
-
-missing_years =
-    setdiff(
-        sort(unique(abatement.year)),
-        available_pulse_years
-    )
-
-isempty(missing_years) ||
-    error(
-        "Policy years missing from GIVE monetary library: $missing_years"
-    )
-
-# ================================================================
-# Which benefit geographies belong to each abatement scenario?
-#
-# EU27 abatement:
-#   global benefits + EU27 benefits
-#
-# Germany-attributable abatement:
-#   global benefits + German benefits
-#
-# Deliberately do NOT calculate EU27 abatement -> Germany benefits
-# in the headline policy output.
-# ================================================================
-
-function benefit_geographies(
-    abatement_scope::String
-)
-
-    if abatement_scope == "EU27"
+    if scope_string == "EU27"
 
         return [
             "globe",
             "EU27"
         ]
 
-    elseif abatement_scope == GERMANY
+    elseif scope_string == "DEU"
 
         return [
             "globe",
-            GERMANY
+            "DEU"
         ]
 
     else
 
         error(
-            "Unsupported abatement scope: $abatement_scope"
+            "Unknown abatement_scope: $scope_string. " *
+            "Expected EU27 or DEU."
         )
     end
 end
 
-# ================================================================
-# 1. MONETARY BENEFITS BY ABATEMENT YEAR AND TRIAL
-# ================================================================
+
+function find_single_row(
+    df::DataFrame;
+    pulse_year::Int,
+    geography::String
+)
+
+    subset = filter(
+        row ->
+            Int(row.pulse_year) == pulse_year &&
+            string(row.geography) == geography,
+        df
+    )
+
+    nrow(subset) == 1 ||
+        error(
+            "Expected exactly one row for pulse_year=$pulse_year, " *
+            "geography=$geography, but found $(nrow(subset))."
+        )
+
+    return subset[1, :]
+end
+
+
+function add_combined_mortality_by_abatement_year(
+    pathway_rows::DataFrame
+)
+
+    combined = combine(
+        groupby(
+            pathway_rows,
+            [
+                :scenario_id,
+                :abatement_scope,
+                :abatement_year,
+                :benefit_geography,
+                :avoided_ch4_t
+            ]
+        ),
+        :deaths_avoided =>
+            sum =>
+            :deaths_avoided
+    )
+
+    combined.mortality_pathway .=
+        "combined_quantified"
+
+    return vcat(
+        pathway_rows,
+        select(
+            combined,
+            names(pathway_rows)
+        )
+    )
+end
+
+
+function add_combined_mortality_by_impact_year(
+    pathway_rows::DataFrame
+)
+
+    combined = combine(
+        groupby(
+            pathway_rows,
+            [
+                :scenario_id,
+                :benefit_geography,
+                :impact_year
+            ]
+        ),
+        :deaths_avoided =>
+            sum =>
+            :deaths_avoided
+    )
+
+    combined.mortality_pathway .=
+        "combined_quantified"
+
+    return vcat(
+        pathway_rows,
+        select(
+            combined,
+            names(pathway_rows)
+        )
+    )
+end
+
+# =====================================================================
+# Load inputs
+# =====================================================================
+
+println("APPLYING POLICY SCENARIO")
+println("========================")
+println()
+
+abatement =
+    DataFrame(
+        load(POLICY_INPUT)
+    )
+
+monetary_trials =
+    DataFrame(
+        load(MONETARY_TRIAL_LIBRARY)
+    )
+
+temperature_cumulative =
+    DataFrame(
+        load(TEMPERATURE_CUMULATIVE_LIBRARY)
+    )
+
+temperature_annual =
+    DataFrame(
+        load(TEMPERATURE_ANNUAL_LIBRARY)
+    )
+
+ozone_cumulative =
+    DataFrame(
+        load(OZONE_CUMULATIVE_LIBRARY)
+    )
+
+ozone_annual =
+    DataFrame(
+        load(OZONE_ANNUAL_LIBRARY)
+    )
+
+# =====================================================================
+# 1. Monetary benefits
+#
+# These are still GIVE monetary outputs from the original GIVE sectors.
+#
+# Ozone mortality is NOT monetised yet.
+#
+# Because the Monte Carlo trials are aligned across pulse years,
+# policy benefits can be summed across abatement years within the same
+# trial before calculating summary statistics across trials.
+# =====================================================================
 
 monetary_by_year = DataFrame(
     scenario_id = String[],
     abatement_scope = String[],
     abatement_year = Int[],
     benefit_geography = String[],
-    metric = String[],
     trialnum = Int[],
+    metric = String[],
     avoided_ch4_t = Float64[],
-    impact_factor_usd2005_per_t_ch4 = Float64[],
-    avoided_benefit_usd2005 = Float64[]
+    impact_value_per_t_ch4 = Float64[],
+    monetised_benefit_usd2005 = Float64[]
 )
 
 for policy_row in eachrow(abatement)
 
     scenario_id =
-        String(policy_row.scenario_id)
+        string(
+            policy_row.scenario_id
+        )
 
     scope =
-        String(policy_row.abatement_scope)
+        string(
+            policy_row.abatement_scope
+        )
 
     year =
-        Int(policy_row.year)
+        Int(
+            policy_row.year
+        )
 
     avoided_ch4_t =
-        Float64(policy_row.avoided_ch4_t)
+        Float64(
+            policy_row.avoided_ch4_t
+        )
 
     for geography in benefit_geographies(scope)
 
         factors = filter(
             row ->
-                row.pulse_year == year &&
-                row.geography == geography,
-            monetary
+                Int(row.pulse_year) == year &&
+                string(row.geography) == geography,
+            monetary_trials
         )
 
         nrow(factors) > 0 ||
             error(
-                "No monetary factors for year=$year, geography=$geography"
+                "No monetary impact factors found for " *
+                "$year / $geography."
             )
 
-        for factor_row in eachrow(factors)
+        for factor in eachrow(factors)
 
-            avoided_benefit =
+            value_per_t =
+                Float64(
+                    factor.value
+                )
+
+            benefit =
                 avoided_ch4_t *
-                factor_row.value
+                value_per_t
 
             push!(
                 monetary_by_year,
@@ -195,11 +318,11 @@ for policy_row in eachrow(abatement)
                     scope,
                     year,
                     geography,
-                    String(factor_row.metric),
-                    Int(factor_row.trialnum),
+                    Int(factor.trialnum),
+                    string(factor.metric),
                     avoided_ch4_t,
-                    Float64(factor_row.value),
-                    Float64(avoided_benefit)
+                    value_per_t,
+                    benefit
                 )
             )
         end
@@ -217,53 +340,48 @@ sort!(
     ]
 )
 
-# ================================================================
-# Sum policy years WITHIN each aligned Monte Carlo trial
-#
-# This is why trial alignment across pulse years mattered.
-# ================================================================
-
+# Sum policy years within each aligned Monte Carlo trial.
 monetary_trial_totals = combine(
     groupby(
         monetary_by_year,
         [
             :scenario_id,
-            :abatement_scope,
             :benefit_geography,
-            :metric,
-            :trialnum
+            :trialnum,
+            :metric
         ]
     ),
-
-    :avoided_benefit_usd2005 =>
+    :monetised_benefit_usd2005 =>
         sum =>
-        :avoided_benefit_usd2005
+        :monetised_benefit_usd2005
 )
 
-# ================================================================
-# Then summarise ACROSS trials
-#
-# With only 5 trials, mean/median are proof-of-concept only.
-# ================================================================
-
+# Then summarize across trials.
 monetary_summary = combine(
     groupby(
         monetary_trial_totals,
         [
             :scenario_id,
-            :abatement_scope,
             :benefit_geography,
             :metric
         ]
     ),
 
-    :avoided_benefit_usd2005 =>
+    :monetised_benefit_usd2005 =>
         mean =>
-        :mean_avoided_benefit_usd2005,
+        :mean_usd2005,
 
-    :avoided_benefit_usd2005 =>
+    :monetised_benefit_usd2005 =>
         median =>
-        :median_avoided_benefit_usd2005,
+        :median_usd2005,
+
+    :monetised_benefit_usd2005 =>
+        (x -> quantile(x, 0.025)) =>
+        :p2_5_usd2005,
+
+    :monetised_benefit_usd2005 =>
+        (x -> quantile(x, 0.975)) =>
+        :p97_5_usd2005,
 
     nrow =>
         :n_trials
@@ -278,13 +396,23 @@ sort!(
     ]
 )
 
-# ================================================================
-# 2. CUMULATIVE PHYSICAL MORTALITY BY ABATEMENT YEAR
+# =====================================================================
+# 2. Physical mortality by abatement year
 #
-# Each row asks:
-# "How many net temperature-related deaths through 2100 are
-# avoided by the methane reduction occurring in this year?"
-# ================================================================
+# Two quantified pathways:
+#
+# temperature
+#   GIVE temperature-related mortality
+#
+# ozone_respiratory
+#   GIVE/FaIR methane
+#   + GIVE population
+#   + GIVE all-cause mortality
+#   + McDuffie ozone-health calibration
+#
+# combined_quantified
+#   simple sum of the two physical mortality pathways
+# =====================================================================
 
 mortality_by_abatement_year = DataFrame(
     scenario_id = String[],
@@ -292,47 +420,50 @@ mortality_by_abatement_year = DataFrame(
     abatement_year = Int[],
     benefit_geography = String[],
     avoided_ch4_t = Float64[],
-    deaths_per_t_ch4 = Float64[],
-    deaths_avoided_through_horizon = Float64[],
-    impact_horizon = Int[]
+    mortality_pathway = String[],
+    deaths_avoided = Float64[]
 )
 
 for policy_row in eachrow(abatement)
 
     scenario_id =
-        String(policy_row.scenario_id)
+        string(
+            policy_row.scenario_id
+        )
 
     scope =
-        String(policy_row.abatement_scope)
+        string(
+            policy_row.abatement_scope
+        )
 
     year =
-        Int(policy_row.year)
+        Int(
+            policy_row.year
+        )
 
     avoided_ch4_t =
-        Float64(policy_row.avoided_ch4_t)
+        Float64(
+            policy_row.avoided_ch4_t
+        )
 
     for geography in benefit_geographies(scope)
 
-        factor = filter(
-            row ->
-                row.pulse_year == year &&
-                row.geography == geography,
-            mortality_cumulative
-        )
+        # ---------------------------------------------------------
+        # GIVE temperature mortality
+        # ---------------------------------------------------------
 
-        nrow(factor) == 1 ||
-            error(
-                "Expected one mortality factor for year=$year, geography=$geography"
+        temperature_factor =
+            find_single_row(
+                temperature_cumulative;
+                pulse_year = year,
+                geography = geography
             )
 
-        deaths_per_t =
-            Float64(
-                factor.cumulative_deaths_per_t_ch4[1]
-            )
-
-        deaths_avoided =
+        temperature_deaths =
             avoided_ch4_t *
-            deaths_per_t
+            Float64(
+                temperature_factor.cumulative_deaths_per_t_ch4
+            )
 
         push!(
             mortality_by_abatement_year,
@@ -342,254 +473,443 @@ for policy_row in eachrow(abatement)
                 year,
                 geography,
                 avoided_ch4_t,
-                deaths_per_t,
-                deaths_avoided,
-                IMPACT_HORIZON
+                "temperature",
+                temperature_deaths
+            )
+        )
+
+        # ---------------------------------------------------------
+        # GIVE-first ozone respiratory mortality
+        # ---------------------------------------------------------
+
+        ozone_factor =
+            find_single_row(
+                ozone_cumulative;
+                pulse_year = year,
+                geography = geography
+            )
+
+        ozone_deaths =
+            avoided_ch4_t *
+            Float64(
+                ozone_factor.cumulative_deaths_per_t_ch4
+            )
+
+        push!(
+            mortality_by_abatement_year,
+            (
+                scenario_id,
+                scope,
+                year,
+                geography,
+                avoided_ch4_t,
+                "ozone_respiratory",
+                ozone_deaths
             )
         )
     end
 end
+
+# Add the combined physical mortality pathway.
+mortality_by_abatement_year =
+    add_combined_mortality_by_abatement_year(
+        mortality_by_abatement_year
+    )
 
 sort!(
     mortality_by_abatement_year,
     [
         :scenario_id,
         :benefit_geography,
+        :mortality_pathway,
         :abatement_year
     ]
 )
 
-# ================================================================
-# Cumulative mortality summary across all policy years
-# ================================================================
+# =====================================================================
+# 3. Physical mortality summary
+# =====================================================================
 
 mortality_summary = combine(
     groupby(
         mortality_by_abatement_year,
         [
             :scenario_id,
-            :abatement_scope,
             :benefit_geography,
-            :impact_horizon
+            :mortality_pathway
         ]
     ),
-
-    :avoided_ch4_t =>
+    :deaths_avoided =>
         sum =>
-        :total_avoided_ch4_t,
-
-    :deaths_avoided_through_horizon =>
-        sum =>
-        :net_temperature_deaths_avoided
+        :deaths_avoided
 )
 
 sort!(
     mortality_summary,
     [
         :scenario_id,
-        :benefit_geography
+        :benefit_geography,
+        :mortality_pathway
     ]
 )
 
-# ================================================================
-# 3. MORTALITY BENEFITS BY CALENDAR / IMPACT YEAR
+# =====================================================================
+# 4. Physical mortality by actual impact year
 #
-# This performs the dynamic convolution:
+# Dynamic convolution:
 #
-# deaths avoided in year t =
-# sum over all prior methane-abatement years p of
+# every annual methane abatement pulse
+#   ×
+# every subsequent annual mortality response
 #
-# avoided CH4[p] * mortality response[p, t]
-#
-# ================================================================
+# Then overlapping pulse responses are summed by impact year.
+# =====================================================================
 
-mortality_impact_rows = DataFrame(
+mortality_impact_pathways = DataFrame(
     scenario_id = String[],
-    abatement_scope = String[],
-    abatement_year = Int[],
     benefit_geography = String[],
     impact_year = Int[],
-    avoided_ch4_t = Float64[],
-    deaths_per_t_ch4 = Float64[],
+    mortality_pathway = String[],
     deaths_avoided = Float64[]
 )
 
 for policy_row in eachrow(abatement)
 
     scenario_id =
-        String(policy_row.scenario_id)
+        string(
+            policy_row.scenario_id
+        )
 
     scope =
-        String(policy_row.abatement_scope)
+        string(
+            policy_row.abatement_scope
+        )
 
-    year =
-        Int(policy_row.year)
+    pulse_year =
+        Int(
+            policy_row.year
+        )
 
     avoided_ch4_t =
-        Float64(policy_row.avoided_ch4_t)
+        Float64(
+            policy_row.avoided_ch4_t
+        )
 
     for geography in benefit_geographies(scope)
 
-        responses = filter(
+        # ---------------------------------------------------------
+        # GIVE temperature mortality annual response
+        # ---------------------------------------------------------
+
+        temperature_response = filter(
             row ->
-                row.pulse_year == year &&
-                row.geography == geography,
-            mortality_response
+                Int(row.pulse_year) == pulse_year &&
+                string(row.geography) == geography,
+            temperature_annual
         )
 
-        nrow(responses) > 0 ||
+        nrow(temperature_response) > 0 ||
             error(
-                "No mortality response for year=$year, geography=$geography"
+                "No temperature mortality response found for " *
+                "$pulse_year / $geography."
             )
 
-        for response_row in eachrow(responses)
+        for response_row in eachrow(
+            temperature_response
+        )
 
-            deaths_avoided =
+            deaths =
                 avoided_ch4_t *
-                response_row.deaths_per_t_ch4
+                Float64(
+                    response_row.deaths_per_t_ch4
+                )
 
             push!(
-                mortality_impact_rows,
+                mortality_impact_pathways,
                 (
                     scenario_id,
-                    scope,
-                    year,
                     geography,
                     Int(response_row.impact_year),
-                    avoided_ch4_t,
-                    Float64(response_row.deaths_per_t_ch4),
-                    Float64(deaths_avoided)
+                    "temperature",
+                    deaths
+                )
+            )
+        end
+
+        # ---------------------------------------------------------
+        # GIVE-first ozone respiratory annual response
+        # ---------------------------------------------------------
+
+        ozone_response = filter(
+            row ->
+                Int(row.pulse_year) == pulse_year &&
+                string(row.geography) == geography,
+            ozone_annual
+        )
+
+        nrow(ozone_response) > 0 ||
+            error(
+                "No ozone mortality response found for " *
+                "$pulse_year / $geography."
+            )
+
+        for response_row in eachrow(
+            ozone_response
+        )
+
+            deaths =
+                avoided_ch4_t *
+                Float64(
+                    response_row.deaths_per_t_ch4
+                )
+
+            push!(
+                mortality_impact_pathways,
+                (
+                    scenario_id,
+                    geography,
+                    Int(response_row.impact_year),
+                    "ozone_respiratory",
+                    deaths
                 )
             )
         end
     end
 end
 
-# Sum contributions from all abatement years into each future year.
+# Sum overlapping annual methane pulses within each mortality pathway.
 mortality_by_impact_year = combine(
     groupby(
-        mortality_impact_rows,
+        mortality_impact_pathways,
         [
             :scenario_id,
-            :abatement_scope,
             :benefit_geography,
-            :impact_year
+            :impact_year,
+            :mortality_pathway
         ]
     ),
-
     :deaths_avoided =>
         sum =>
-        :net_temperature_deaths_avoided
+        :deaths_avoided
 )
+
+# Add combined quantified mortality by impact year.
+mortality_by_impact_year =
+    add_combined_mortality_by_impact_year(
+        mortality_by_impact_year
+    )
 
 sort!(
     mortality_by_impact_year,
     [
         :scenario_id,
         :benefit_geography,
+        :mortality_pathway,
         :impact_year
     ]
 )
 
-# ================================================================
+# =====================================================================
 # Save outputs
-# ================================================================
+# =====================================================================
 
 save(
-    MONETARY_BY_YEAR_PATH,
+    MONETARY_BY_YEAR_OUTPUT,
     monetary_by_year
 )
 
 save(
-    MONETARY_SUMMARY_PATH,
+    MONETARY_SUMMARY_OUTPUT,
     monetary_summary
 )
 
 save(
-    MORTALITY_BY_ABATEMENT_YEAR_PATH,
+    MORTALITY_BY_YEAR_OUTPUT,
     mortality_by_abatement_year
 )
 
 save(
-    MORTALITY_SUMMARY_PATH,
+    MORTALITY_SUMMARY_OUTPUT,
     mortality_summary
 )
 
 save(
-    MORTALITY_BY_IMPACT_YEAR_PATH,
+    MORTALITY_IMPACT_YEAR_OUTPUT,
     mortality_by_impact_year
 )
 
-# ================================================================
-# Print compact result summary
-# ================================================================
+# =====================================================================
+# Console summary
+# =====================================================================
 
 println()
 println("POLICY PROOF OF CONCEPT COMPLETE")
 println("================================")
 println()
 
-for scenario in unique(abatement.scenario_id)
+scenario_ids =
+    unique(
+        string.(
+            abatement.scenario_id
+        )
+    )
 
-    scenario_string =
-        String(scenario)
+for scenario_id in scenario_ids
 
     println()
-    println(scenario_string)
-    println("-" ^ length(scenario_string))
+    println(scenario_id)
+    println(
+        repeat(
+            "-",
+            length(scenario_id)
+        )
+    )
+    println()
+
+    scenario_policy = filter(
+        row ->
+            string(row.scenario_id) ==
+            scenario_id,
+        abatement
+    )
+
+    total_abatement_mt =
+        sum(
+            Float64.(
+                scenario_policy.avoided_ch4_t
+            )
+        ) / 1e6
 
     scenario_mortality = filter(
         row ->
-            row.scenario_id == scenario_string,
+            string(row.scenario_id) ==
+            scenario_id,
         mortality_summary
     )
 
-    println()
-    println("Physical mortality:")
-
-    for row in eachrow(scenario_mortality)
-
-        println(
-            "  ",
-            rpad(row.benefit_geography, 6),
-            ": ",
-            row.total_avoided_ch4_t / 1_000_000,
-            " Mt CH4 avoided -> ",
-            row.net_temperature_deaths_avoided,
-            " net temperature-related deaths avoided through ",
-            row.impact_horizon
+    geographies =
+        unique(
+            string.(
+                scenario_mortality.benefit_geography
+            )
         )
-    end
 
-    scenario_money = filter(
-        row ->
-            row.scenario_id == scenario_string,
-        monetary_summary
+    println(
+        "Physical mortality, ",
+        round(
+            total_abatement_mt,
+            digits = 3
+        ),
+        " Mt CH4 avoided:"
     )
 
-    println()
-    println("Monetary benefits, 5-trial test means:")
-
-    for geography in unique(
-        scenario_money.benefit_geography
-    )
-
-        geo_results = filter(
-            row ->
-                row.benefit_geography == geography,
-            scenario_money
-        )
+    for geography in geographies
 
         println()
-        println("  ", geography)
+        println(
+            "  ",
+            geography
+        )
 
-        for row in eachrow(geo_results)
+        geo_rows = filter(
+            row ->
+                string(row.benefit_geography) ==
+                geography,
+            scenario_mortality
+        )
+
+        for pathway in [
+            "temperature",
+            "ozone_respiratory",
+            "combined_quantified"
+        ]
+
+            pathway_row = filter(
+                row ->
+                    string(row.mortality_pathway) ==
+                    pathway,
+                geo_rows
+            )
+
+            nrow(pathway_row) == 1 ||
+                continue
+
+            label =
+                pathway == "temperature" ?
+                    "Temperature-related" :
+                pathway == "ozone_respiratory" ?
+                    "Ozone respiratory" :
+                    "Combined quantified"
 
             println(
                 "    ",
-                rpad(row.metric, 38),
+                rpad(
+                    label,
+                    24
+                ),
                 ": ",
-                row.mean_avoided_benefit_usd2005 / 1_000_000,
+                pathway_row.deaths_avoided[1],
+                " deaths avoided through ",
+                IMPACT_HORIZON
+            )
+        end
+    end
+
+    println()
+    println(
+        "Monetary benefits, ",
+        maximum(
+            monetary_summary.n_trials
+        ),
+        "-trial test means:"
+    )
+
+    scenario_money = filter(
+        row ->
+            string(row.scenario_id) ==
+            scenario_id,
+        monetary_summary
+    )
+
+    money_geographies =
+        unique(
+            string.(
+                scenario_money.benefit_geography
+            )
+        )
+
+    for geography in money_geographies
+
+        println()
+        println(
+            "  ",
+            geography
+        )
+
+        geo_money = filter(
+            row ->
+                string(row.benefit_geography) ==
+                geography,
+            scenario_money
+        )
+
+        sort!(
+            geo_money,
+            :metric
+        )
+
+        for row in eachrow(
+            geo_money
+        )
+
+            println(
+                "    ",
+                rpad(
+                    string(row.metric),
+                    40
+                ),
+                ": ",
+                row.mean_usd2005 / 1e6,
                 " million USD2005"
             )
         end
@@ -597,21 +917,58 @@ for scenario in unique(abatement.scenario_id)
 end
 
 println()
+println()
 println("Saved policy outputs:")
-println("  ", MONETARY_BY_YEAR_PATH)
-println("  ", MONETARY_SUMMARY_PATH)
-println("  ", MORTALITY_BY_ABATEMENT_YEAR_PATH)
-println("  ", MORTALITY_SUMMARY_PATH)
-println("  ", MORTALITY_BY_IMPACT_YEAR_PATH)
+
+println(
+    "  ",
+    MONETARY_BY_YEAR_OUTPUT
+)
+
+println(
+    "  ",
+    MONETARY_SUMMARY_OUTPUT
+)
+
+println(
+    "  ",
+    MORTALITY_BY_YEAR_OUTPUT
+)
+
+println(
+    "  ",
+    MORTALITY_SUMMARY_OUTPUT
+)
+
+println(
+    "  ",
+    MORTALITY_IMPACT_YEAR_OUTPUT
+)
 
 println()
 println("IMPORTANT:")
+
 println(
-    "Monetary results use only 5 aligned Monte Carlo trials and are proof-of-concept values."
+    "Physical ozone mortality now uses the preferred GIVE-first " *
+    "implementation: GIVE/FaIR methane, GIVE population, GIVE " *
+    "all-cause mortality trajectories, and only the ozone-health " *
+    "calibration from McDuffie."
 )
+
 println(
-    "EU27 and German monetised totals exclude agriculture."
+    "Monetary results still contain GIVE temperature mortality only. " *
+    "Ozone respiratory mortality has not yet been monetised."
 )
+
 println(
-    "Physical mortality covers net temperature-related mortality only, not methane-induced ozone mortality."
+    "Physical combined mortality equals GIVE temperature mortality " *
+    "plus GIVE-first ozone respiratory mortality."
+)
+
+println(
+    "EU27 and German GIVE monetary totals exclude agriculture."
+)
+
+println(
+    "Monetary results use only the current 5 aligned Monte Carlo trials."
 )
