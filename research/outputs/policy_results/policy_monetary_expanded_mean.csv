@@ -1,0 +1,5 @@
+"scenario_id","benefit_geography","base_give_metric","base_give_mean_usd2005","ozone_mortality_monetised_usd2005","expanded_mean_usd2005","ozone_share_of_expanded_mean"
+"EU27_import_regulation_mock","EU27","total_monetised_excl_agriculture",2.0253282389461306e8,7.768715120279291e8,9.794043359225421e8,0.7932081608523421
+"EU27_import_regulation_mock","globe","total_monetised",6.624882717817087e9,5.936741229319208e9,1.2561623947136295e10,0.47260937393947555
+"Germany_import_regulation_mock","DEU","total_monetised_excl_agriculture",6.837759350502205e6,3.572834436930914e7,4.256610371981135e7,0.8393613990251182
+"Germany_import_regulation_mock","globe","total_monetised",1.1924788892070756e9,1.0686134212774576e9,2.2610923104845333e9,0.47260937393947555
