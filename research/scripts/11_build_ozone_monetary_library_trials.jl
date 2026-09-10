@@ -220,6 +220,14 @@ N_TRIALS =
         trial_design
     )
 
+# MimiGIVE numbers deterministic draws 1:N, so sorted design rows must
+# have exactly those trial numbers to preserve the explicit ID mapping.
+N_TRIALS > 0 ||
+    error("mc_trial_design.csv must contain at least one trial.")
+
+trial_design.trialnum == collect(1:N_TRIALS) ||
+    error("mc_trial_design.csv must contain consecutive trial numbers 1:N.")
+
 rffsp_ids =
     collect(
         trial_design.rffsp_id
@@ -1422,6 +1430,35 @@ println()
 println("QA")
 println("==")
 println()
+
+# Both trial-level outputs must contain every explicit design mapping,
+# including complete trial coverage for each pulse year.
+trial_id_columns = [:trialnum, :rffsp_id, :fair_parameter_set_id]
+expected_trial_ids = select(trial_design, trial_id_columns)
+
+for (label, output) in [
+    ("country", country_rows),
+    ("summary", summary_rows)
+]
+    for pulse_year in PULSE_YEARS
+        pulse_rows = filter(row -> row.pulse_year == pulse_year, output)
+        output_trial_ids = sort!(
+            unique(select(pulse_rows, trial_id_columns)),
+            :trialnum
+        )
+
+        nrow(output_trial_ids) == N_TRIALS ||
+            error("$label output for $pulse_year has an incorrect trial count.")
+
+        output_trial_ids == expected_trial_ids ||
+            error("$label output for $pulse_year does not match mc_trial_design.csv.")
+    end
+end
+
+all(summary_stats.n_trials .== N_TRIALS) ||
+    error("Ozone summary trial counts do not match mc_trial_design.csv.")
+
+println("PASS: all outputs contain all $N_TRIALS explicit aligned trials.")
 
 # Pulse-year discount factor must equal 1.
 max_pulse_df_error =

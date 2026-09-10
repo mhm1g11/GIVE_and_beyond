@@ -707,12 +707,25 @@ for pulse_year in PULSE_YEARS
             :slr
         )
 
+    global_total_excl_agriculture =
+        global_mortality .+
+        global_energy .+
+        global_slr
+
     add_trial_rows!(
         all_trials,
         pulse_year,
         "globe",
         "total_monetised",
         global_total
+    )
+
+    add_trial_rows!(
+        all_trials,
+        pulse_year,
+        "globe",
+        "total_monetised_excl_agriculture",
+        global_total_excl_agriculture
     )
 
     add_trial_rows!(
@@ -989,6 +1002,14 @@ for pulse_year in PULSE_YEARS
         "  Global total: ",
         mean(
             global_total
+        ),
+        " USD2005/t CH4"
+    )
+
+    println(
+        "  Global total excl. agriculture: ",
+        mean(
+            global_total_excl_agriculture
         ),
         " USD2005/t CH4"
     )
