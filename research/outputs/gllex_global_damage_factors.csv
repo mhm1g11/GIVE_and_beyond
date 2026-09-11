@@ -1,0 +1,5 @@
+"year","gas","mean","median","p05","p95","unit","geography","metric","n_trials","price_basis"
+2024,"CH4",3565.9314936285755,3412.109369983709,1308.0415341188293,6127.524163235948,"USD2026_per_t_CH4","globe","extended_total_monetised",100,"August 2026 CPI-U, U.S. city average, all items"
+2024,"CO2",50.08029195216434,43.13101617564897,2.7478601988684583,112.8172413756014,"USD2026_per_t_CO2","globe","total_monetised",100,"August 2026 CPI-U, U.S. city average, all items"
+2025,"CH4",3757.473913113309,3603.6640707712777,1434.8816571250836,6434.752817576689,"USD2026_per_t_CH4","globe","extended_total_monetised",100,"August 2026 CPI-U, U.S. city average, all items"
+2025,"CO2",51.62268004163841,44.3196007808585,3.0977779858807213,120.7764048170041,"USD2026_per_t_CO2","globe","total_monetised",100,"August 2026 CPI-U, U.S. city average, all items"
