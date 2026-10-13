@@ -1,0 +1,15 @@
+schema_version = 1
+[run]
+trials = 2
+valuation_year = 2025
+seed = 20260908
+output_dir = "../outputs/example-run-001"
+[inputs]
+trial_design = "mc_trial_design.csv"
+labor_design = "labor_trial_design.csv"
+labor_root = "../external/labour"
+momm_root = "../external/MOMM-RFT"
+momm_socio = "../external/momm_reference_socioeconomics.csv"
+[[scenarios]]
+name = "synthetic_policy"
+path = "synthetic_policy.csv"

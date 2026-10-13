@@ -1,0 +1,13 @@
+/outputs/
+/external/
+/local/
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+# The pinned Manifest.toml is intentionally retained.
+
+__pycache__/
+*.pyc
+.julia/

@@ -1,0 +1,113 @@
+[
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "src/components/labor.jl",
+    "local_path": "data/moore2026_labor/reference/src/components/labor.jl",
+    "bytes": 2470,
+    "sha256": "cce057f6525f3cfc14c9c9ec39ee5633161c97ff3590980fa5bd904d9b69eae5",
+    "scientific_purpose": "Published reference implementation for equivalence tests, not included in the production model"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "src/components/AgricultureShare.jl",
+    "local_path": "data/moore2026_labor/reference/src/components/AgricultureShare.jl",
+    "bytes": 744,
+    "sha256": "8b0bfb897f99794ba307df0c6369d8170144c3f8f4dc1b66f249ca7245d1c15c",
+    "scientific_purpose": "GTAP agriculture output share for splitting labour impacts"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "src/utils.jl",
+    "local_path": "data/moore2026_labor/reference/src/utils.jl",
+    "bytes": 5421,
+    "sha256": "424cdf537ae6ae2e183807f6cb392fa32a7fbcfa40acbc6d910c92feaef0fca5",
+    "scientific_purpose": "Published reference implementation for equivalence tests, not included in the production model"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "LICENSE",
+    "local_path": "data/moore2026_labor/LICENSE",
+    "bytes": 1082,
+    "sha256": "31db052cd62522064e18191026a6315e4623b2f6a68eb6a071e3a0a988d8a387",
+    "scientific_purpose": "Upstream MIT licence"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "data/dimension_gcm.csv",
+    "local_path": "data/moore2026_labor/dimension_gcm.csv",
+    "bytes": 228,
+    "sha256": "493af36cd53d5b90de1e861871bcf46adfc34ff30f74a433af679fad15392e96",
+    "scientific_purpose": "Ensemble and 15 labour-response model identities"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "data/region_crosswalk.csv",
+    "local_path": "data/moore2026_labor/region_crosswalk.csv",
+    "bytes": 4321,
+    "sha256": "7b3a5b89540ef7d648fb0b04d00ae5c45dda46895177acf212eea33b3fb1e253",
+    "scientific_purpose": "GIVE country to GTAP mapping"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "data/202505_SectorShare_v2.csv",
+    "local_path": "data/moore2026_labor/202505_SectorShare_v2.csv",
+    "bytes": 2720,
+    "sha256": "e5a84f76d5f10751374b8dcb33d580cce0d26632eecf27214771b813e375daad",
+    "scientific_purpose": "GTAP agriculture output share for splitting labour impacts"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "data/gtap_output/20260428_Plants_People_results_v4_ISO_Revision.csv",
+    "local_path": "data/moore2026_labor/gtap_output/20260428_Plants_People_results_v4_ISO_Revision.csv",
+    "bytes": 2558890,
+    "sha256": "0e6c9b5c09af29037242c15857e13be9a6dd2e3f2e4cd650ffc3a957fa214aeb",
+    "scientific_purpose": "Country/GCM/temperature welfare responses for labour only"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "data/gtap_output/20260428_Plants_People_results_v4_Lancet_Revision.csv",
+    "local_path": "data/moore2026_labor/gtap_output/20260428_Plants_People_results_v4_Lancet_Revision.csv",
+    "bytes": 2615298,
+    "sha256": "978c5e5af3a06f413f47449dbb16e34ebf1d267caa9ffbb242a4b91737af28d9",
+    "scientific_purpose": "Country/GCM/temperature welfare responses for labour only"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "data/ypc2017/rffsp_ypc2017.parquet",
+    "local_path": "data/moore2026_labor/ypc2017/rffsp_ypc2017.parquet",
+    "bytes": 14278001,
+    "sha256": "40bbee7a59529cd564e00d5f5dcf1f6590fc884251a41531d64fc55de30b9280",
+    "scientific_purpose": "2017 per-capita income baseline for labour sector-share scaling"
+  },
+  {
+    "repository": "lrennels/paper-2026-give-labor-ag",
+    "release": "v1.0.1",
+    "commit": "5d034e751f1170c7c2fcaff2d0fcd96a8fdc54c8",
+    "original_path": "data/ypc2017/rffsp_ypc2017.parquet",
+    "local_path": "data/moore2026_labor/ypc2017/rffsp_ypc2017_selected.csv",
+    "bytes": 525195,
+    "sha256": "9b8490bbd8a60ad25466dbf55e8890347877be8dfb02a5d39208df32be67d228",
+    "scientific_purpose": "Lossless selected baseline rows (default 6546 and saved production RFF IDs), preserving USD2011 for labour sector-share scaling",
+    "transformation": "research/scripts/16_extract_labor_baseline.py; pyarrow 25.0.1; round-trip float64 CSV"
+  }
+]
