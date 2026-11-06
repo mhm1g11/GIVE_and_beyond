@@ -1,0 +1,53 @@
+version: 1
+project:
+  id: 7c5fc98a-4417-498b-bc17-7cd5278a6e52
+  title: GIVE Methane Methodology
+  description: A living scientific and computational methodology for methane policy analysis with GIVE and its extensions.
+  github: mhm1g11/GIVE_and_beyond
+  keywords:
+    - methane
+    - GIVE
+    - social cost of methane
+    - climate damages
+  toc:
+    - file: index.md
+    - file: methane-scenarios/index.md
+      children:
+        - file: methane-scenarios/international.md
+        - file: methane-scenarios/domestic.md
+        - file: methane-scenarios/benchmarks.md
+    - file: give/index.md
+      children:
+        - file: give/damages.md
+        - file: give/discounting.md
+    - file: ozone/index.md
+      children:
+        - file: ozone/validation.md
+    - file: extensions/index.md
+    - file: monte-carlo/index.md
+      children:
+        - file: monte-carlo/implementation.md
+    - file: scenarios/index.md
+      children:
+        - file: scenarios/template.md
+site:
+  template: book-theme
+  title: GIVE Methane
+  options:
+    folders: true
+  nav:
+    - title: Methane scenarios
+      url: /methane-scenarios/
+    - title: GIVE
+      url: /give/
+    - title: Ozone
+      url: /ozone/
+    - title: Future extensions
+      url: /extensions/
+    - title: Monte Carlo
+      url: /monte-carlo/
+    - title: Results
+      url: /scenarios/
+  actions:
+    - title: Source code
+      url: https://github.com/mhm1g11/GIVE_and_beyond/tree/release-candidate
